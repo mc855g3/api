@@ -13,7 +13,8 @@ def _is_valid_location(pacient):
     return True
 
 def add_pacient(data):
-    pacient = Pacient(data.hc, _current_timestamp(), data.hc)
+    hc=data.get("hc")
+    pacient = Pacient(hc, _current_timestamp(), hc)
     
     if _is_valid_location(pacient):
         queue.add(pacient)
@@ -21,7 +22,7 @@ def add_pacient(data):
 
 def remove_pacient(hc):
     queue.remove(hc)
-    return queue.queue
+    return queue.toJson()
 
 def list_queue():
-    return queue.queue
+    return queue.toJson()

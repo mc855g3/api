@@ -1,10 +1,9 @@
 from flask import Flask, Response, abort
 from flask import request
 import controllers.pacient_queue as pacient_queue
-from models.pacient import Pacient
-
-
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def index():
@@ -16,7 +15,7 @@ def post_pacient():
     pacient = pacient_queue.add_pacient(data)
     
     if pacient:
-        return pacient, 201
+        return pacient.toJson(), 201
     
     abort(403)
 
