@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from models.patient import Patient
-import time
 import service.patient_queue_service as queue
 from math import sin, cos, sqrt, atan2, radians
-
+from datetime import datetime
+import json
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route('/')
@@ -29,7 +31,7 @@ def add():
         long = data['long']
         if not is_distance_valid(lat, long):
             return jsonify({"error": "Invalid location"}), 403
-        patient = Patient(hc, time.time(), lat, long)
+        patient = Patient(hc, datetime.utcnow().isoformat(), lat, long)
         queue.add_patient(patient)
     except Exception as e:
         print(e)
@@ -50,7 +52,20 @@ def delete(hc):
     )
 
 
+@app.before_request
+def attempt_auth():
+    if request.method != 'POST':
+        if request.authorization is None or request.authorization['username'] is None or request.authorization['password'] is None:
+            return jsonify({"error": "Missing authorization headers"}), 401
+        with open('credentials') as f:
+            data = f.read()
+        credentials = json.loads(data)
+        if credentials != request.authorization:
+            return jsonify({"error": "Invalid credentials"}), 401
+
+
 def is_distance_valid(lat2, long2):
+    # Lat/Long HC
     lat1 = radians(-22.8269585)
     long1 = radians(-47.064116)
     lat2 = radians(lat2)
@@ -61,4 +76,5 @@ def is_distance_valid(lat2, long2):
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlong / 2) ** 2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
+    # Limite 20km
     return distance <= 20
