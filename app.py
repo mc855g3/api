@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from models.patient import Patient
 import service.patient_queue_service as queue
 from math import sin, cos, sqrt, atan2, radians
@@ -9,13 +9,14 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-
 @app.route('/')
+@cross_origin()
 def index():
     return 'Hello MC855'
 
 
 @app.route('/patient')
+@cross_origin()
 def get_list():
     patients = queue.get_patients()
     print(patients)
@@ -23,6 +24,7 @@ def get_list():
 
 
 @app.post('/patient')
+@cross_origin
 def add():
     try:
         data = request.json
@@ -34,7 +36,6 @@ def add():
         patient = Patient(hc, datetime.utcnow().isoformat(), lat, long)
         queue.add_patient(patient)
     except Exception as e:
-        print(e)
         return jsonify({"error": "Unknown error while trying to add patient to queue"}), 500
     return app.response_class(
         response=patient.toJSON(),
@@ -44,6 +45,7 @@ def add():
 
 
 @app.delete('/patient/<hc>')
+@cross_origin()
 def delete(hc):
     queue.delete_patient(hc)
     return app.response_class(
@@ -53,6 +55,7 @@ def delete(hc):
 
 
 @app.before_request
+@cross_origin()
 def attempt_auth():
     if request.method != 'POST':
         if request.authorization is None or request.authorization['username'] is None or request.authorization['password'] is None:
