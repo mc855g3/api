@@ -9,22 +9,24 @@ import json
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route('/')
-@cross_origin()
 def index():
+    if not attempt_auth(request):
+        return jsonify({"error": "Invalid authorization"}), 401
     return 'Hello MC855'
 
 
 @app.route('/patient')
-@cross_origin()
 def get_list():
+    if not attempt_auth(request):
+        return jsonify({"error": "Invalid authorization"}), 401
     patients = queue.get_patients()
     print(patients)
     return jsonify(patients)
 
 
 @app.post('/patient')
-@cross_origin
 def add():
     try:
         data = request.json
@@ -45,8 +47,9 @@ def add():
 
 
 @app.delete('/patient/<hc>')
-@cross_origin()
 def delete(hc):
+    if not attempt_auth(request):
+        return jsonify({"error": "Invalid authorization"}), 401
     queue.delete_patient(hc)
     return app.response_class(
         status=204,
@@ -54,17 +57,15 @@ def delete(hc):
     )
 
 
-@app.before_request
-@cross_origin()
-def attempt_auth():
-    if request.method != 'POST':
-        if request.authorization is None or request.authorization['username'] is None or request.authorization['password'] is None:
-            return jsonify({"error": "Missing authorization headers"}), 401
-        with open('credentials') as f:
-            data = f.read()
-        credentials = json.loads(data)
-        if credentials != request.authorization:
-            return jsonify({"error": "Invalid credentials"}), 401
+def attempt_auth(req):
+    if req.authorization is None or req.authorization['username'] is None or req.authorization['password'] is None:
+        return False
+    with open('credentials') as f:
+        data = f.read()
+    credentials = json.loads(data)
+    if credentials != req.authorization:
+        return False
+    return True
 
 
 def is_distance_valid(lat2, long2):
