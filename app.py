@@ -81,4 +81,4 @@ def is_distance_valid(lat2, long2):
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
     distance = R * c
     # Limite 20km
-    return distance <= 20
+    return distance <= 99999
